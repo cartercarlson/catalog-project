@@ -37,8 +37,8 @@
 </div>
 <!-- This is a method in python and you want the output printed on the HTML doc, you need double brackets -->
 		<a href="{{ url_for('newMenuItem', restaurant_id = restaurant.id) }}">Create New Item </a>
-		<a href="{{ url_for('editMenuItem', restaurant_id = restaurant.id, menu_id = menu_id) }}">Edit Menu Item</a>
-		<a href="{{ url_for('deleteMenuItem', restaurant_id = restaurant.id, menu_id = menu_id) }}">Delete Menu Item</a>
+		<a href="{{ url_for('editMenuItem', restaurant_id = restaurant.id, menu_id = i.id) }}">Edit Menu Item</a>
+		<a href="{{ url_for('deleteMenuItem', restaurant_id = restaurant.id, menu_id = i.id) }}">Delete Menu Item</a>
 </br>
 </br>
 <!-- we need endfor or end if to end the loop-->

@@ -10,11 +10,12 @@ Base.metadata.bind=engine
 
 DBSession=sessionmaker(bind=engine)
 session=DBSession()
+CLIENT_ID = json.loads(open('client_secrets.json', 'r').read())['web']['client_id']
 
 # Show all restaurants
 @app.route('/')
 app.route('/restaurants/')
-def restaurantMenu(restaurant_id):
+def showRestaurants():
 	restaurant=session.query(Restaurant).filter_by(id=restaurant_id).one()
 	items=sesion.query(MenuItem).filter_by(restaurant_id=restaurant_id).all()
 	return render_template('restaurants.html', restaurant=restaurant, items=items, restaurant_id=restaurant_id)
@@ -28,9 +29,9 @@ def newRestaurant(restaurant_id):
 		session.add(newRestaurant)
 		session.commit()
 		flash("Created Restaurant '%s'" % newRestaurant)
-		return redirect(url_for('showRestaurants', restaurant_id=restaurant_id))
+		return redirect(url_for('showRestaurants'))
 	else:
-		return render_template('newRestaurant.html', restaurant_id=restaurant_id)
+		return render_template('newRestaurant.html')
 
 
 # Edit a restaurant
@@ -42,7 +43,7 @@ def editRestaurant(restaurant_id):
 			editedItem.name=request.form['name']
 			session.add(editedItem)
 			session.commit()
-			flash("Successfully Edited %s" % editedItem)
+			flash("Successfully Edited %s" % editedItem.name)
 		return redirect(url_for('showRestaurants', restaurant_id=restaurant_id))
 	else:
 		return render_template('editRestaurant.html', restaurant_id=restaurant_id, item=editedItem)
@@ -55,7 +56,7 @@ def deleteRestaurant(restaurant_id):
 	if request.method=='POST':
 		session.delete(itemToDelete)
 		session.commit()
-		flash("Successfully Deleted %s" % itemToDelete)
+		flash("Successfully Deleted %s" % itemToDelete.name)
 		return redirect(url_for('showRestaurants', restaurant_id=restaurant_id))
 	else:
 		return render_template('deleteRestaurant.html', restaurant_id=restaurant_id, item=itemToDelete)
@@ -67,7 +68,7 @@ def deleteRestaurant(restaurant_id):
 def restaurantMenu(restaurant_id):
 	restaurant=session.query(Restaurant).filter_by(id=restaurant_id).one()
 	items=session.query(MenuItem).filter_by(restaurant_id=restaurant.id).all()
-	return render_template('menu.html', restaurant=restaurant, items=items, restaurant_id=restaurant.id)
+	return render_template('menu.html', restaurant=restaurant, items=items)
 
 
 # Create a new menu item
@@ -77,7 +78,7 @@ def newMenuItem(restaurant_id):
 		newItem=MenuItem(name=request.form['name'], description=request.form['description'], price=request.form['price'], course=request.form['course'], restaurant_id=restaurant_id)
 		session.add(newItem)
 		session.commit()
-		flash("new menu item created!")
+		flash("New Menu %s Item Successfully Created!" % (newItem.name))
 		return redirect(url_for('restaurantMenu', restaurant_id=restaurant_id))
 	else:
 		return render_template('newMenuItem.html', restaurant_id=restaurant_id)
@@ -101,6 +102,7 @@ def editMenuItem(restaurant_id, menu_id):
 # Delete a menu item
 @app.route('/restaurants/<int:restaurant_id>/<int:menu_id>/delete/', methods=['GET', 'POST'])
 def deleteMenuItem(restaurant_id, menu_id):
+	restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
 	itemToDelete=session.query(MenuItem).filter_by(id=menu_id).one()
 	if request.method=='POST':
 		session.delete(itemToDelete)
@@ -111,10 +113,19 @@ def deleteMenuItem(restaurant_id, menu_id):
 		return render_template('deleteMenuItem.html', item=itemToDelete)
 
 
+# Making an API Endpoint (GET Request)
+@app.route('restaurants/<int:restaurant_id>/menu/JSON/')
+def restaurantMenuJson(restaurant_id):
+    restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+    items = session.query(MenuItem).filter_by(restaurant_id=restaurant_id).all()
+    return jsonify(MenuItems=[i.serialize for i in items])
 
 
-
-
+# ADD API endpoint here
+@app.route('restaurants/<int:restaurant_id>/menu/<int:menu_id>/JSON/')
+def menuItemJson(restaurant_id, menu_id):
+    menuItem = session.query(MenuItem).filter_by(id=menu_id).one()
+    return jsonify(MenuItem = menuItem.serialize)
 
 
 
