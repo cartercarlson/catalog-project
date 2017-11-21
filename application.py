@@ -1,7 +1,16 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
-from sqlalchemy import create_engine
+from flask import Flask, render_template, request, redirect, jsonify, url_for, flash
+from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
-from database_setup import Base, Restaurant, MenuItem
+from database_setup import Base, Restaurant, MenuItem, User
+from flask import session as login_session
+import random
+import string
+from oauth2client.client import flow_from_clientsecrets
+from oauth2client.client import FlowExchangeError
+import httplib2
+import json
+from flask import make_response
+import requests
 
 app=Flask(__name__)
 
@@ -14,14 +23,10 @@ session=DBSession()
 
 # Show all restaurants
 @app.route('/')
-app.route('/restaurants/')
+@app.route('/restaurants/')
 def showRestaurants():
-	restaurants=session.query(Restaurant).filter_by(id=restaurant_id).one()
-	items=sesion.query(MenuItem).filter_by(restaurant_id=restaurant_id).all()
-	if 'username' not in login_session:
-		return render_template('publicrestaurants.html', restaurants=restaurants)
-	else:
-		return render_template('restaurants.html', restaurants=restaurants)
+	restaurants = session.query(Restaurant).order_by(asc(Restaurant.name))
+	return render_template('restaurants.html', restaurants=restaurants)
 
 
 # Create a new restaurant
@@ -75,17 +80,13 @@ def deleteRestaurant(restaurant_id):
 		return render_template('deleteRestaurant.html', restaurant=itemToDelete)
 
 
-# Show menu of restaurant
+# Show restaurant menu
 @app.route('/restaurants/<int:restaurant_id>/')
 @app.route('/restaurants/<int:restaurant_id>/menu/')
-def restaurantMenu(restaurant_id):
+def showMenu(restaurant_id):
 	restaurant=session.query(Restaurant).filter_by(id=restaurant_id).one()
 	items=session.query(MenuItem).filter_by(restaurant_id=restaurant.id).all()
-	creator = getUserInfo(restaurant.user_id)
-	if 'username' not in login_session or creator.id != login_session['user_id']:
-		return render_template('publicmenu.html', items=items, restaurant=restaurant, creator=creator)
-	else:
-		return render_template('menu.html', restaurant=restaurant, items=items, creator=creator)
+	return render_template('menu.html', restaurant=restaurant, items=items)
 
 
 # Create a new menu item
@@ -96,7 +97,7 @@ def newMenuItem(restaurant_id):
 		session.add(newItem)
 		flash("Menu Item '%s' Successfully Created!" % newItem.name)
 		session.commit()
-		return redirect(url_for('restaurantMenu', restaurant_id=restaurant_id))
+		return redirect(url_for('showMenu', restaurant_id=restaurant_id))
 	else:
 		return render_template('newMenuItem.html', restaurant_id=restaurant_id)
 
@@ -138,7 +139,7 @@ def deleteMenuItem(restaurant_id, menu_id):
 		session.delete(itemToDelete)
 		flash("Menu Item '%s' Successfully Deleted" % itemToDelete.name)
 		session.commit()
-		return redirect(url_for('restaurantMenu', restaurant_id=restaurant_id))
+		return redirect(url_for('showMenu', restaurant_id=restaurant_id))
 	else:
 		return render_template('deleteMenuItem.html', item=itemToDelete)
 
@@ -155,7 +156,7 @@ def restaurantsJSON():
 
 
 # API endpoint 2
-@app.route('restaurants/<int:restaurant_id>/menu/JSON/')
+@app.route('/restaurants/<int:restaurant_id>/menu/JSON/')
 def restaurantMenuJson(restaurant_id):
     restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
     items = session.query(MenuItem).filter_by(restaurant_id=restaurant_id).all()
@@ -163,7 +164,7 @@ def restaurantMenuJson(restaurant_id):
 
 
 # API endpoint 3
-@app.route('restaurants/<int:restaurant_id>/menu/<int:menu_id>/JSON/')
+@app.route('/restaurants/<int:restaurant_id>/menu/<int:menu_id>/JSON/')
 def menuItemJson(restaurant_id, menu_id):
     menuItem = session.query(MenuItem).filter_by(id=menu_id).one()
     return jsonify(MenuItem = menuItem.serialize)
@@ -450,4 +451,5 @@ def disconnect():
 
 if __name__ == '__main__':
     app.debug = True
-    app.run(host='0.0.0.0', port=9000)
+    app.secret_key = 'password'
+    app.run(host='0.0.0.0', port=5000)
