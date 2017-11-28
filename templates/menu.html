@@ -7,26 +7,21 @@
 	<div class="row banner menu">
 		<div class="col-md-11 col-md-offset-1 padding-none">
 			<h1>{{ restaurant.name }}
-			<figure class="creator">
-				<img src="{{ url_for('static', filename='blank_user.gif') }}">
-				<figcaption>Menu creator's name goes here</figcaption>
-			</figure>
 			</h1>
 
 		</div>
 	</div>
 
 <div class = 'flash'>
-		      {% with messages = get_flashed_messages() %}
-      {% if messages %}
-          
-        <ul>
-        {% for message in messages %}
-            <li> <strong> {{ message }} </strong> </li>
-        {% endfor %}
-        </ul>
-        {% endif %}
-    {% endwith %}
+			{% with messages = get_flashed_messages() %}
+	{% if messages %}
+		<ul>
+		{% for message in messages %}
+			<li> <strong> {{ message }} </strong> </li>
+		{% endfor %}
+		</ul>
+		{% endif %}
+	{% endwith %}
 
 </div>
 	<div class="row padding-top padding-bottom">
