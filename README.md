@@ -1,4 +1,5 @@
 # Item Catalog Application
+
 ## Introduction
 The purpose of this project is to develop an application that provides a list
 of items within a variety of categories as well as provide a user registration
@@ -10,6 +11,7 @@ provides a compelling service to my users.
 ---
 
 ## Getting Started
+
 ### Required downloads
 1. Clone or download this repository.
 2. Download [Vagrant](https://vagrantup.com/ "Vagrant link")
